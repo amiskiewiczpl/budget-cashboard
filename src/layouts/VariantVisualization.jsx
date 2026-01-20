@@ -76,6 +76,19 @@ export default function VariantVisualization({ budget, variant, title, subtitle 
     setExchangeOpen(false);
   }
 
+  useEffect(() => {
+    function handleDragEnd() {
+      if (draggingMoney) clearDragging();
+    }
+
+    window.addEventListener("dragend", handleDragEnd);
+    window.addEventListener("drop", handleDragEnd);
+    return () => {
+      window.removeEventListener("dragend", handleDragEnd);
+      window.removeEventListener("drop", handleDragEnd);
+    };
+  }, [draggingMoney, clearDragging]);
+
   function readPayload(e) {
     try {
       const raw = e.dataTransfer.getData("application/json");

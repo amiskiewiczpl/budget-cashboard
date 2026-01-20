@@ -1207,6 +1207,10 @@ body {
 .variantPage--viz .variantPanel--envelopes{ grid-area: envelopes; }
 .variantPage--viz .variantPanel--cash{ grid-area: cash; }
 .variantPage--viz .variantPanel--guide{ grid-area: guide; }
+.variantPage--viz{
+  padding-left: calc(clamp(16px, 3vw, 42px) + var(--side-w));
+  padding-right: calc(clamp(16px, 3vw, 42px) + var(--side-w));
+}
 .variantPage--plan .variantGrid{
   grid-template-columns: repeat(12, 1fr);
   grid-template-areas:
