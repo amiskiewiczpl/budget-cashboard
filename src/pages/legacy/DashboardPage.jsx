@@ -1,5 +1,5 @@
-import Card from "../components/Card";
-import { formatPLN } from "../utils/money";
+import Card from "../../components/Card";
+import { formatPLN } from "../../utils/money";
 
 export default function DashboardPage({ budget }) {
   const {
@@ -27,12 +27,12 @@ export default function DashboardPage({ budget }) {
             <div className="metric__value">{formatPLN(cashAmount)}</div>
           </div>
           <div className="metric">
-            <div className="metric__label">Suma środków</div>
+            <div className="metric__label">Suma ‘>rodkÆˆw</div>
             <div className="metric__value">{formatPLN(totalAmount)}</div>
           </div>
         </div>
 
-        <div className="hint">Wizualizacja działa tylko przeciąganiem (drag&drop). Bez “klik-klik”.</div>
+        <div className="hint">Wizualizacja dzia‘'a tylko przeciŽganiem (drag&drop). Bez ƒ?˜klik-klikƒ?œ.</div>
       </Card>
 
       <section className="threeCol">
@@ -47,10 +47,10 @@ export default function DashboardPage({ budget }) {
                     <span className="listName">{b.name}</span>
                     <div className="listActions">
                       <button className="btnTiny" onClick={() => renameBucket(b.id)}>
-                        Zmień nazwę
+                        Zmie‘" nazwŽt
                       </button>
                       <button className="btnTiny btnTiny--danger" onClick={() => deleteBucket(b.id)}>
-                        Usuń
+                        Usu‘"
                       </button>
                     </div>
                   </div>
@@ -66,7 +66,7 @@ export default function DashboardPage({ budget }) {
         </Card>
 
         <Card title="Historia / Wydatki">
-          <div className="empty">Dodamy później.</div>
+          <div className="empty">Dodamy pÆˆ‘­niej.</div>
         </Card>
 
         <Card title="Szybkie akcje">
@@ -76,10 +76,10 @@ export default function DashboardPage({ budget }) {
             </button>
 
             <button className="btn btn--ghost" onClick={removeCash}>
-              - Usuń z puli
+              - Usu‘" z puli
             </button>
             <button className="btn btn--ghost" onClick={addBucket}>
-              + Dodaj kopertę
+              + Dodaj kopertŽt
             </button>
             <button className="btn btn--ghost" onClick={transferBetweenBuckets} disabled={!state.buckets.length}>
               + Transfer

@@ -1,15 +1,14 @@
 import { useMemo, useRef, useState, useEffect } from "react"; // dodaj useEffect
-import Card from "../components/Card";
-import Envelope from "../components/Envelope";
-import CashArea from "../components/CashArea";
-import RightExchangeZone from "../components/RightExchangeZone";
-import ExchangePanel from "../components/ExchangePanel";
-import LeftMergeZone from "../components/LeftMergeZone";
-import MergePanel from "../components/MergePanel";
-import { formatPLN } from "../utils/money";
-import { makeChangePlan } from "../utils/exchange";
-import { normalizeWalletFromTotalCents } from "../utils/money";
-
+import Card from "../../components/Card";
+import Envelope from "../../components/Envelope";
+import CashArea from "../../components/CashArea";
+import RightExchangeZone from "../../components/RightExchangeZone";
+import ExchangePanel from "../../components/ExchangePanel";
+import LeftMergeZone from "../../components/LeftMergeZone";
+import MergePanel from "../../components/MergePanel";
+import { formatPLN } from "../../utils/money";
+import { makeChangePlan } from "../../utils/exchange";
+import { normalizeWalletFromTotalCents } from "../../utils/money";
 
 function emptyMergeSelection() {
   return { source: null, bucketId: null, countsMap: {}, totalCents: 0 };
@@ -47,16 +46,16 @@ export default function VisualizationPage({ budget }) {
     return makeChangePlan(exchangeDenom);
   }, [exchangeDenom]);
   const mergePreviewWallet = useMemo(() => {
-  if (!mergeSel?.totalCents) return {};
-  return normalizeWalletFromTotalCents(mergeSel.totalCents);
-}, [mergeSel?.totalCents]);
-const mergeSelRef = useRef(mergeSel);
-const warnedMixRef = useRef(false);
+    if (!mergeSel?.totalCents) return {};
+    return normalizeWalletFromTotalCents(mergeSel.totalCents);
+  }, [mergeSel?.totalCents]);
+  const mergeSelRef = useRef(mergeSel);
+  const warnedMixRef = useRef(false);
 
-useEffect(() => {
-  mergeSelRef.current = mergeSel;
-  if (!mergeSel?.source) warnedMixRef.current = false; // reset ostrzeżenia po wyczyszczeniu koszyka
-}, [mergeSel]);
+  useEffect(() => {
+    mergeSelRef.current = mergeSel;
+    if (!mergeSel?.source) warnedMixRef.current = false; // reset ostrze‘•enia po wyczyszczeniu koszyka
+  }, [mergeSel]);
   function allowDrop(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
@@ -106,84 +105,81 @@ useEffect(() => {
 
   // RIGHT: exchange on drop
   function onDropExchange() {
-  const p = lastDragRef.current;
-  if (!p?.denomCents) return clearDragging();
+    const p = lastDragRef.current;
+    if (!p?.denomCents) return clearDragging();
 
-  const plan = makeChangePlan(p.denomCents);
-  if (!plan) return clearDragging();
+    const plan = makeChangePlan(p.denomCents);
+    if (!plan) return clearDragging();
 
-  exchangeOne?.({
-    source: p.source,
-    bucketId: p.bucketId,
-    denomCents: p.denomCents,
-    plan,
-  });
+    exchangeOne?.({
+      source: p.source,
+      bucketId: p.bucketId,
+      denomCents: p.denomCents,
+      plan,
+    });
 
-  clearDragging();
-}
-
-
-  function addToMergeBasket(e) {
-  if (e?.preventDefault) e.preventDefault();
-
-  const p = lastDragRef.current;
-  if (!p?.denomCents) return clearDragging();
-
-  // 1) zdejmij z puli/koperty (rezerwacja)
-  const ok = reserveOne?.(p);
-  if (!ok) return clearDragging();
-
-  // 2) walidacja źródła — POZA setState (żeby nie dublowało!)
-  const cur = mergeSelRef.current;
-
-  if (cur?.source) {
-    const sameSource =
-      cur.source === p.source &&
-      (cur.source === "cash" ||
-        (cur.source === "bucket" && cur.bucketId === p.bucketId));
-
-    if (!sameSource) {
-      // oddaj tylko tę 1 sztukę, którą właśnie zarezerwowaliśmy
-      returnReserved?.({
-        source: p.source,
-        bucketId: p.source === "bucket" ? p.bucketId : null,
-        countsMap: { [String(p.denomCents)]: 1 },
-      });
-
-      if (!warnedMixRef.current) {
-        warnedMixRef.current = true;
-        window.alert(
-          "Scalanie działa tylko z jednego miejsca naraz (Pula albo jedna koperta). Zwracam pieniądze."
-        );
-      }
-
-      clearDragging();
-      return;
-    }
+    clearDragging();
   }
 
-  // 3) dopisz do koszyka — bez efektów ubocznych
-  setMergeSel((prev) => {
-    if (!prev?.source) {
-      return {
-        source: p.source,
-        bucketId: p.source === "bucket" ? p.bucketId : null,
-        countsMap: { [String(p.denomCents)]: 1 },
-        totalCents: Number(p.denomCents),
-      };
+  function addToMergeBasket(e) {
+    if (e?.preventDefault) e.preventDefault();
+
+    const p = lastDragRef.current;
+    if (!p?.denomCents) return clearDragging();
+
+    // 1) zdejmij z puli/koperty (rezerwacja)
+    const ok = reserveOne?.(p);
+    if (!ok) return clearDragging();
+
+    // 2) walidacja ‘­rÆˆd‘'a ƒ?" POZA setState (‘•eby nie dublowa‘'o!)
+    const cur = mergeSelRef.current;
+
+    if (cur?.source) {
+      const sameSource =
+        cur.source === p.source &&
+        (cur.source === "cash" || (cur.source === "bucket" && cur.bucketId === p.bucketId));
+
+      if (!sameSource) {
+        // oddaj tylko tŽt 1 sztukŽt, ktÆˆrŽ w‘'a‘>nie zarezerwowali‘>my
+        returnReserved?.({
+          source: p.source,
+          bucketId: p.source === "bucket" ? p.bucketId : null,
+          countsMap: { [String(p.denomCents)]: 1 },
+        });
+
+        if (!warnedMixRef.current) {
+          warnedMixRef.current = true;
+          window.alert(
+            "Scalanie dzia‘'a tylko z jednego miejsca naraz (Pula albo jedna koperta). Zwracam pieniŽdze."
+          );
+        }
+
+        clearDragging();
+        return;
+      }
     }
 
-    const next = { ...prev, countsMap: { ...(prev.countsMap || {}) } };
-    const k = String(p.denomCents);
-    next.countsMap[k] = Number(next.countsMap[k] || 0) + 1;
-    next.totalCents = Number(next.totalCents || 0) + Number(p.denomCents);
-    return next;
-  });
+    // 3) dopisz do koszyka ƒ?" bez efektÆˆw ubocznych
+    setMergeSel((prev) => {
+      if (!prev?.source) {
+        return {
+          source: p.source,
+          bucketId: p.source === "bucket" ? p.bucketId : null,
+          countsMap: { [String(p.denomCents)]: 1 },
+          totalCents: Number(p.denomCents),
+        };
+      }
 
-  setMergeOpen(true);
-  clearDragging();
-}
+      const next = { ...prev, countsMap: { ...(prev.countsMap || {}) } };
+      const k = String(p.denomCents);
+      next.countsMap[k] = Number(next.countsMap[k] || 0) + 1;
+      next.totalCents = Number(next.totalCents || 0) + Number(p.denomCents);
+      return next;
+    });
 
+    setMergeOpen(true);
+    clearDragging();
+  }
 
   function handleReturn() {
     if (!mergeSel?.source) return;
@@ -243,27 +239,26 @@ useEffect(() => {
 
       {/* LEFT merge */}
       <LeftMergeZone
-  active={isDragging}
-  onEnter={() => isDragging && setMergeOpen(true)}
-  onLeave={() => setMergeOpen(false)}
-  onDrop={addToMergeBasket}
-/>
+        active={isDragging}
+        onEnter={() => isDragging && setMergeOpen(true)}
+        onLeave={() => setMergeOpen(false)}
+        onDrop={addToMergeBasket}
+      />
       <MergePanel
-  visible={mergeOpen}
-  selection={mergeSel}
-  resultWallet={mergePreviewWallet}
-  onReturn={handleReturn}
-  onMerge={handleMerge}
-/>
-
+        visible={mergeOpen}
+        selection={mergeSel}
+        resultWallet={mergePreviewWallet}
+        onReturn={handleReturn}
+        onMerge={handleMerge}
+      />
 
       {/* RIGHT exchange */}
       <RightExchangeZone
-  active={isDragging}
-  onEnter={() => isDragging && setExchangeOpen(true)}
-  onLeave={() => setExchangeOpen(false)}
-  onDrop={onDropExchange}
-/>
+        active={isDragging}
+        onEnter={() => isDragging && setExchangeOpen(true)}
+        onLeave={() => setExchangeOpen(false)}
+        onDrop={onDropExchange}
+      />
       <ExchangePanel
         visible={exchangeOpen && isDragging}
         denomCents={exchangeDenom}
