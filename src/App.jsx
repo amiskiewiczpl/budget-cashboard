@@ -2,6 +2,7 @@ import "./App.css";
 import { HashRouter, Routes, Route, NavLink } from "react-router-dom";
 import DashboardGlass from "./pages/glass/DashboardPage";
 import VisualizationGlass from "./pages/glass/VisualizationPage";
+import TableVisualizationGlass from "./pages/glass/TableVisualizationPage";
 import PlanPage from "./pages/plan/PlanPage";
 import useBudgetState from "./utils/useBudgetState";
 
@@ -28,6 +29,9 @@ export default function App() {
               <NavLink className={({ isActive }) => `navLink ${isActive ? "navLink--active" : ""}`} to="/wizualizacja">
                 Wizualizacja
               </NavLink>
+              <NavLink className={({ isActive }) => `navLink ${isActive ? "navLink--active" : ""}`} to="/stol">
+                Stol
+              </NavLink>
               <NavLink className={({ isActive }) => `navLink ${isActive ? "navLink--active" : ""}`} to="/plan">
                 Plan
               </NavLink>
@@ -38,6 +42,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<DashboardGlass budget={budget} />} />
           <Route path="/wizualizacja" element={<VisualizationGlass budget={budget} />} />
+          <Route path="/stol" element={<TableVisualizationGlass budget={budget} />} />
           <Route path="/plan" element={<PlanPage />} />
         </Routes>
       </div>

@@ -21,6 +21,20 @@ export default function MergePanel({
     .filter((x) => x.count > 0)
     .sort((a, b) => b.denomCents - a.denomCents);
 
+  const renderThumbs = (denomCents, count) => {
+    const limit = Math.min(count, 3);
+    return (
+      <div className="mergeItem__thumbs">
+        {Array.from({ length: limit }).map((_, i) => (
+          <div className="mergeItem__thumbItem" key={`${denomCents}-${i}`}>
+            <DenomThumb denomCents={denomCents} />
+          </div>
+        ))}
+        {count > limit && <div className="mergeItem__more">+{count - limit}</div>}
+      </div>
+    );
+  };
+
   return (
     <aside className={`mergePanel ${visible ? "mergePanel--visible" : ""}`}>
       <div className="mergePanel__inner">
@@ -46,16 +60,7 @@ export default function MergePanel({
               <div className="mergePanel__list">
                 {basketEntries.map((x) => (
                   <div className="mergeItem" key={`b-${x.denomCents}`}>
-                    <div className="mergeItem__thumb">
-                      <DenomThumb denomCents={x.denomCents} />
-                    </div>
-
-                    <div className="mergeItem__line">
-                      <div className="mergeItem__label">
-                        {formatPLN(x.denomCents / 100)}
-                      </div>
-                      <div className="mergeItem__count">× {x.count}</div>
-                    </div>
+                    {renderThumbs(x.denomCents, x.count)}
                   </div>
                 ))}
               </div>
@@ -71,16 +76,7 @@ export default function MergePanel({
               <div className="mergePanel__list">
                 {resultEntries.map((x) => (
                   <div className="mergeItem mergeItem--result" key={`r-${x.denomCents}`}>
-                    <div className="mergeItem__thumb">
-                      <DenomThumb denomCents={x.denomCents} />
-                    </div>
-
-                    <div className="mergeItem__line">
-                      <div className="mergeItem__label">
-                        {formatPLN(x.denomCents / 100)}
-                      </div>
-                      <div className="mergeItem__count">× {x.count}</div>
-                    </div>
+                    {renderThumbs(x.denomCents, x.count)}
                   </div>
                 ))}
               </div>

@@ -3,6 +3,20 @@ import { formatDenom } from "../utils/money";
 
 export default function ExchangePanel({ visible, denomCents, plan, onConfirm }) {
   const hasPlan = !!plan?.length;
+  const renderThumbs = (cents, count) => {
+    const limit = Math.min(count, 3);
+    return (
+      <div className="exchangeRow__thumbs">
+        {Array.from({ length: limit }).map((_, i) => (
+          <div className="exchangeRow__thumbItem" key={`${cents}-${i}`}>
+            <DenomThumb denomCents={cents} />
+          </div>
+        ))}
+        {count > limit && <div className="exchangeRow__more">+{count - limit}</div>}
+      </div>
+    );
+  };
+
   return (
     <aside className={`exchangePanel ${visible ? "exchangePanel--visible" : ""}`}
            aria-hidden={!visible}>
@@ -20,11 +34,7 @@ export default function ExchangePanel({ visible, denomCents, plan, onConfirm }) 
               <div className="exchangePanel__list">
                 {plan.map((p) => (
                   <div className="exchangeRow" key={p.cents}>
-                    <div className="exchangeRow__img"><DenomThumb denomCents={p.cents} /></div>
-                    <div>
-                      <div className="exchangeRow__label">{formatDenom(p.cents)}</div>
-                      <div className="exchangeRow__count">x {p.count}</div>
-                    </div>
+                    {renderThumbs(p.cents, p.count)}
                   </div>
                 ))}
               </div>

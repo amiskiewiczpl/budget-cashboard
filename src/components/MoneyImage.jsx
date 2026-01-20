@@ -7,19 +7,31 @@ import { formatDenom } from "../utils/money";
  * - Bez obramowek
  * - Draggable (HTML5 DnD)
  */
-export default function MoneyImage({ denomCents, type, payload, onDragStart, onDragEnd }) {
+export default function MoneyImage({ denomCents, type, payload, onDragStart, onDragEnd, onSelect, selected = false }) {
   const img = getDenomImage(denomCents);
+  const isCoarsePointer =
+    typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)")?.matches;
 
   return (
     <button
-      className={`imgMoney ${type === "banknote" ? "imgMoney--note" : "imgMoney--coin"}`}
+      className={`imgMoney ${type === "banknote" ? "imgMoney--note" : "imgMoney--coin"} ${
+        selected ? "imgMoney--selected" : ""
+      }`}
       style={{
         ...(img ? { backgroundImage: `url(${img})` } : null),
         ...getScaleStyle(denomCents, type === "banknote" ? "banknote" : "coin"),
       }}
-      draggable
-      onDragStart={(e) => onDragStart(e, payload)}
-      onDragEnd={onDragEnd}
+      draggable={!isCoarsePointer}
+      onDragStart={(e) => {
+        if (isCoarsePointer) return;
+        onDragStart(e, payload);
+      }}
+      onDragEnd={isCoarsePointer ? undefined : onDragEnd}
+      onClick={(e) => {
+        if (!isCoarsePointer || !onSelect) return;
+        e.stopPropagation();
+        onSelect(payload);
+      }}
       title="Przeciągnij, aby przenieść"
       aria-label="money"
     >

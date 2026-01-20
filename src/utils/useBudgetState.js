@@ -4,6 +4,7 @@ import {
   fromCents,
   toCents,
   parseMoney,
+  formatPLN,
   walletTotalCents,
   normalizeWalletFromTotalCents,
   walletInc,
@@ -36,6 +37,43 @@ export default function useBudgetState() {
     saveState(state);
   }, [state]);
 
+  function addTransaction(prev, label) {
+    if (!label) return prev;
+    const entry = { id: makeIdSafe(), ts: Date.now(), label };
+    const list = [entry, ...(prev.transactions || [])].slice(0, 50);
+    return { ...prev, transactions: list };
+  }
+
+  function mergeAllPossible() {
+    setState((prev) => {
+      const cashTotal = walletTotalCents(prev.cashWallet);
+      const newCashWallet = normalizeWalletFromTotalCents(cashTotal);
+      const newBuckets = prev.buckets.map((b) => {
+        const total = walletTotalCents(b.wallet);
+        return { ...b, wallet: normalizeWalletFromTotalCents(total) };
+      });
+      return addTransaction(
+        { ...prev, cashWallet: newCashWallet, buckets: newBuckets },
+        "Scalono wszystko mozliwe"
+      );
+    });
+  }
+
+  function returnAllToCash() {
+    setState((prev) => {
+      let totalCents = walletTotalCents(prev.cashWallet);
+      for (const b of prev.buckets) {
+        totalCents += walletTotalCents(b.wallet);
+      }
+      const newCashWallet = normalizeWalletFromTotalCents(totalCents);
+      const newBuckets = prev.buckets.map((b) => ({ ...b, wallet: {} }));
+      return addTransaction(
+        { ...prev, cashWallet: newCashWallet, buckets: newBuckets },
+        "Zwrocono wszystko do puli"
+      );
+    });
+  }
+
   const cashCents = useMemo(() => walletTotalCents(state.cashWallet), [state.cashWallet]);
   const cashAmount = fromCents(cashCents);
 
@@ -67,7 +105,10 @@ export default function useBudgetState() {
 
     setState((prev) => {
       const newCashC = walletTotalCents(prev.cashWallet) + toCents(amount);
-      return { ...prev, cashWallet: normalizeWalletFromTotalCents(newCashC) };
+      return addTransaction(
+        { ...prev, cashWallet: normalizeWalletFromTotalCents(newCashC) },
+        `Zasilono pule ${formatPLN(amount)}`
+      );
     });
   }
 
@@ -84,7 +125,10 @@ export default function useBudgetState() {
 
     setState((prev) => {
       const newCashC = walletTotalCents(prev.cashWallet) - amtC;
-      return { ...prev, cashWallet: normalizeWalletFromTotalCents(newCashC) };
+      return addTransaction(
+        { ...prev, cashWallet: normalizeWalletFromTotalCents(newCashC) },
+        `Usunieto z puli ${formatPLN(amount)}`
+      );
     });
   }
 
@@ -124,7 +168,10 @@ export default function useBudgetState() {
         const bC = walletTotalCents(b.wallet) + amtC;
         return { ...b, wallet: normalizeWalletFromTotalCents(bC) };
       });
-      return { ...prev, cashWallet: normalizeWalletFromTotalCents(newCashC), buckets: newBuckets };
+      return addTransaction(
+        { ...prev, cashWallet: normalizeWalletFromTotalCents(newCashC), buckets: newBuckets },
+        `Przypisano ${formatPLN(amount)} do ${bucket.name}`
+      );
     });
   }
 
@@ -161,7 +208,10 @@ export default function useBudgetState() {
         }
         return b;
       });
-      return { ...prev, buckets: newBuckets };
+      return addTransaction(
+        { ...prev, buckets: newBuckets },
+        `Transfer ${formatPLN(amount)}: ${from.name} -> ${to.name}`
+      );
     });
   }
 
@@ -195,17 +245,23 @@ export default function useBudgetState() {
       if (!bucket) return prev;
 
       let newCashWallet = { ...(prev.cashWallet || {}) };
+      const bucketTotal = walletTotalCents(bucket.wallet);
       for (const [k, v] of Object.entries(bucket.wallet || {})) {
         const denom = Number(k);
         const cnt = Number(v || 0);
         if (cnt > 0) newCashWallet = walletInc(newCashWallet, denom, cnt);
       }
 
-      return {
-        ...prev,
-        cashWallet: newCashWallet,
-        buckets: prev.buckets.filter((x) => x.id !== bucketId),
-      };
+      return addTransaction(
+        {
+          ...prev,
+          cashWallet: newCashWallet,
+          buckets: prev.buckets.filter((x) => x.id !== bucketId),
+        },
+        bucketTotal > 0
+          ? `Usunieto koperte "${bucket.name}" (do puli ${formatPLN(fromCents(bucketTotal))})`
+          : `Usunieto koperte "${bucket.name}"`
+      );
     });
   }
 
@@ -225,7 +281,10 @@ export default function useBudgetState() {
 
         const newCashWallet = walletInc(prev.cashWallet, denom, -1);
         buckets[targetIdx].wallet = walletInc(buckets[targetIdx].wallet, denom, +1);
-        return { ...prev, cashWallet: newCashWallet, buckets };
+        return addTransaction(
+          { ...prev, cashWallet: newCashWallet, buckets },
+          `Pula -> ${buckets[targetIdx].name}: ${formatPLN(denom / 100)}`
+        );
       }
 
       if (payload.source === "bucket") {
@@ -238,7 +297,10 @@ export default function useBudgetState() {
 
         buckets[fromIdx].wallet = walletInc(buckets[fromIdx].wallet, denom, -1);
         buckets[targetIdx].wallet = walletInc(buckets[targetIdx].wallet, denom, +1);
-        return { ...prev, buckets };
+        return addTransaction(
+          { ...prev, buckets },
+          `${buckets[fromIdx].name} -> ${buckets[targetIdx].name}: ${formatPLN(denom / 100)}`
+        );
       }
 
       return prev;
@@ -261,7 +323,10 @@ export default function useBudgetState() {
 
       buckets[fromIdx].wallet = walletInc(buckets[fromIdx].wallet, denom, -1);
       const newCashWallet = walletInc(prev.cashWallet, denom, +1);
-      return { ...prev, cashWallet: newCashWallet, buckets };
+      return addTransaction(
+        { ...prev, cashWallet: newCashWallet, buckets },
+        `${buckets[fromIdx].name} -> Pula: ${formatPLN(denom / 100)}`
+      );
     });
   }
 
@@ -280,7 +345,10 @@ export default function useBudgetState() {
 
         let w = walletInc(prev.cashWallet, denom, -1);
         for (const p of plan) w = walletInc(w, Number(p.cents), Number(p.count || 0));
-        return { ...prev, cashWallet: w };
+        return addTransaction(
+          { ...prev, cashWallet: w },
+          `Rozmieniono ${formatPLN(denom / 100)} w Puli`
+        );
       }
 
       if (payload.source === "bucket") {
@@ -297,7 +365,10 @@ export default function useBudgetState() {
         let w = walletInc(buckets[idx].wallet, denom, -1);
         for (const p of plan) w = walletInc(w, Number(p.cents), Number(p.count || 0));
         buckets[idx].wallet = w;
-        return { ...prev, buckets };
+        return addTransaction(
+          { ...prev, buckets },
+          `Rozmieniono ${formatPLN(denom / 100)} w ${buckets[idx].name}`
+        );
       }
 
       return prev;
@@ -393,7 +464,10 @@ export default function useBudgetState() {
           const cnt = Number(v || 0);
           if (cnt > 0) w = walletInc(w, denom, cnt);
         }
-        return { ...prev, cashWallet: w };
+        return addTransaction(
+          { ...prev, cashWallet: w },
+          `Scalono ${formatPLN(total / 100)} w Puli`
+        );
       }
 
       if (source === "bucket") {
@@ -409,7 +483,10 @@ export default function useBudgetState() {
           if (cnt > 0) w = walletInc(w, denom, cnt);
         }
         buckets[idx].wallet = w;
-        return { ...prev, buckets };
+        return addTransaction(
+          { ...prev, buckets },
+          `Scalono ${formatPLN(total / 100)} w ${buckets[idx].name}`
+        );
       }
 
       return prev;
@@ -436,5 +513,7 @@ export default function useBudgetState() {
     reserveOne,
     returnReserved,
     mergeReserved,
+    mergeAllPossible,
+    returnAllToCash,
   };
 }

@@ -5,11 +5,27 @@ import MoneyImage from "./MoneyImage";
  * Pula (cash) jako DROP-TARGET.
  * W puli grupujemy (bo to może być dużo), ale renderujemy kilka sztuk (maxPerDenom).
  */
-export default function CashArea({ cashWallet, cashLabel, onDropCash, onDragOver, onDragStart, onDragEnd, maxPerDenom = 14 }) {
+export default function CashArea({
+  cashWallet,
+  cashLabel,
+  onDropCash,
+  onDragOver,
+  onDragStart,
+  onDragEnd,
+  onSelect,
+  selectedPayload,
+  onTapTarget,
+  maxPerDenom = 14,
+}) {
   const breakdown = walletToBreakdown(cashWallet);
 
   return (
-    <div className="moneyArea" onDragOver={onDragOver} onDrop={onDropCash}>
+    <div
+      className={`moneyArea ${selectedPayload ? "moneyArea--ready" : ""}`}
+      onDragOver={onDragOver}
+      onDrop={onDropCash}
+      onClick={() => onTapTarget?.()}
+    >
       <div className="moneyHeader">
         <div className="moneyBig">{cashLabel}</div>
       </div>
@@ -33,6 +49,8 @@ export default function CashArea({ cashWallet, cashLabel, onDropCash, onDragOver
                     payload={{ source: "cash", denomCents: p.cents }}
                     onDragStart={onDragStart}
                     onDragEnd={onDragEnd}
+                    onSelect={onSelect}
+                    selected={selectedPayload?.source === "cash" && selectedPayload?.denomCents === p.cents}
                   />
                 ))}
                 {p.count > maxPerDenom && <div className="moreTag">+{p.count - maxPerDenom}</div>}

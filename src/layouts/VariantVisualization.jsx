@@ -5,7 +5,7 @@ import RightExchangeZone from "../components/RightExchangeZone";
 import ExchangePanel from "../components/ExchangePanel";
 import LeftMergeZone from "../components/LeftMergeZone";
 import MergePanel from "../components/MergePanel";
-import { formatPLN } from "../utils/money";
+import { formatPLN, formatDenom } from "../utils/money";
 import { makeChangePlan } from "../utils/exchange";
 import { normalizeWalletFromTotalCents } from "../utils/money";
 
@@ -28,6 +28,9 @@ export default function VariantVisualization({ budget, variant, title, subtitle 
 
   const [draggingMoney, setDraggingMoney] = useState(null);
   const lastDragRef = useRef(null);
+  const [selectedPayload, setSelectedPayload] = useState(null);
+  const isCoarsePointer =
+    typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)")?.matches;
 
   const [exchangeOpen, setExchangeOpen] = useState(false);
   const [exchangeDenom, setExchangeDenom] = useState(null);
@@ -36,6 +39,15 @@ export default function VariantVisualization({ budget, variant, title, subtitle 
   const [mergeSel, setMergeSel] = useState(() => emptyMergeSelection());
 
   const isDragging = !!draggingMoney?.denomCents;
+  const historyItems = (state.transactions || []).slice(0, 10);
+
+  function formatHistoryTime(ts) {
+    try {
+      return new Date(ts).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return "";
+    }
+  }
 
   const exchangePlan = useMemo(() => {
     if (!exchangeDenom) return null;
@@ -69,11 +81,20 @@ export default function VariantVisualization({ budget, variant, title, subtitle 
     setExchangeDenom(payload?.denomCents || null);
   }
 
+  function selectPayload(payload) {
+    if (!isCoarsePointer) return;
+    setSelectedPayload(payload);
+    setDraggingMoney(payload);
+    lastDragRef.current = payload;
+    setExchangeDenom(payload?.denomCents || null);
+  }
+
   function clearDragging() {
     setDraggingMoney(null);
     lastDragRef.current = null;
     setExchangeDenom(null);
     setExchangeOpen(false);
+    setSelectedPayload(null);
   }
 
   useEffect(() => {
@@ -112,6 +133,18 @@ export default function VariantVisualization({ budget, variant, title, subtitle 
     const p = readPayload(e) || lastDragRef.current;
     if (!p?.denomCents) return clearDragging();
     moveOneToCash(p);
+    clearDragging();
+  }
+
+  function onTapBucket(bucketId) {
+    if (!isCoarsePointer || !selectedPayload) return;
+    moveOneToBucket(selectedPayload, bucketId);
+    clearDragging();
+  }
+
+  function onTapCash() {
+    if (!isCoarsePointer || !selectedPayload) return;
+    moveOneToCash(selectedPayload);
     clearDragging();
   }
 
@@ -226,6 +259,23 @@ export default function VariantVisualization({ budget, variant, title, subtitle 
         </div>
       </section>
 
+      {isCoarsePointer && selectedPayload && (
+        <section className="mobileDragBar">
+          <div className="mobileDragBar__label">Wybrano: {formatDenom(selectedPayload.denomCents)}</div>
+          <div className="mobileDragBar__actions">
+            <button type="button" className="mobileDragBar__btn" onClick={onDropExchange}>
+              Rozmien
+            </button>
+            <button type="button" className="mobileDragBar__btn" onClick={addToMergeBasket}>
+              Scalaj
+            </button>
+            <button type="button" className="mobileDragBar__btn" onClick={clearDragging}>
+              Anuluj
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="variantVizGrid">
         <div className="variantPanel variantPanel--envelopes">
           <div className="variantPanel__header">
@@ -242,6 +292,9 @@ export default function VariantVisualization({ budget, variant, title, subtitle 
                 onDragOver={allowDrop}
                 onDragStart={setPayload}
                 onDragEnd={clearDragging}
+                onSelect={selectPayload}
+                selectedPayload={selectedPayload}
+                onTapTarget={onTapBucket}
               />
             ))}
           </div>
@@ -259,19 +312,29 @@ export default function VariantVisualization({ budget, variant, title, subtitle 
             onDragOver={allowDrop}
             onDragStart={setPayload}
             onDragEnd={clearDragging}
+            onSelect={selectPayload}
+            selectedPayload={selectedPayload}
+            onTapTarget={onTapCash}
           />
         </div>
 
-        <div className="variantPanel variantPanel--guide">
+        <div className="variantPanel variantPanel--history">
           <div className="variantPanel__header">
-            <h3 className="variantPanel__title">Szybki przewodnik</h3>
-            <span className="variantPanel__meta">Drag and drop</span>
+            <h3 className="variantPanel__title">Historia ruchow</h3>
+            <span className="variantPanel__meta">Ostatnie akcje</span>
           </div>
-          <ul className="variantGuide">
-            <li>Przenos pieniadze miedzy pula i kopertami.</li>
-            <li>Rozmieniaj: przeciagnij w prawy pas.</li>
-            <li>Scalaj: upusc w lewy pas.</li>
-          </ul>
+          {historyItems.length === 0 ? (
+            <div className="variantEmpty">Brak historii.</div>
+          ) : (
+            <div className="historyList">
+              {historyItems.map((item) => (
+                <div className="historyItem" key={item.id}>
+                  <div className="historyItem__label">{item.label}</div>
+                  <div className="historyItem__time">{formatHistoryTime(item.ts)}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

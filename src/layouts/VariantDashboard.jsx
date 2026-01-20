@@ -16,6 +16,15 @@ export default function VariantDashboard({ budget, variant, title, subtitle }) {
     renameBucket,
     deleteBucket,
   } = budget;
+  const historyItems = (state.transactions || []).slice(0, 10);
+
+  function formatHistoryTime(ts) {
+    try {
+      return new Date(ts).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return "";
+    }
+  }
 
   return (
     <main className={`variantPage variantPage--${variant} variantPage--dashboard`}>
@@ -102,7 +111,18 @@ export default function VariantDashboard({ budget, variant, title, subtitle }) {
             <h3 className="variantPanel__title">Historia</h3>
             <span className="variantPanel__meta">Wydatki i notatki</span>
           </div>
-          <div className="variantEmpty">Dodamy pozniej.</div>
+          {historyItems.length === 0 ? (
+            <div className="variantEmpty">Brak historii.</div>
+          ) : (
+            <div className="historyList">
+              {historyItems.map((item) => (
+                <div className="historyItem" key={item.id}>
+                  <div className="historyItem__label">{item.label}</div>
+                  <div className="historyItem__time">{formatHistoryTime(item.ts)}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="variantPanel variantPanel--chart">

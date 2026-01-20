@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from "react"; // dodaj useEffect
+import { useMemo, useRef, useState, useEffect } from "react";
 import Card from "../../components/Card";
 import Envelope from "../../components/Envelope";
 import CashArea from "../../components/CashArea";
@@ -6,7 +7,7 @@ import RightExchangeZone from "../../components/RightExchangeZone";
 import ExchangePanel from "../../components/ExchangePanel";
 import LeftMergeZone from "../../components/LeftMergeZone";
 import MergePanel from "../../components/MergePanel";
-import { formatPLN } from "../../utils/money";
+import { formatPLN, formatDenom } from "../../utils/money";
 import { makeChangePlan } from "../../utils/exchange";
 import { normalizeWalletFromTotalCents } from "../../utils/money";
 
@@ -30,6 +31,9 @@ export default function VisualizationPage({ budget }) {
   // drag tracking
   const [draggingMoney, setDraggingMoney] = useState(null);
   const lastDragRef = useRef(null);
+  const [selectedPayload, setSelectedPayload] = useState(null);
+  const isCoarsePointer =
+    typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)")?.matches;
 
   // right exchange
   const [exchangeOpen, setExchangeOpen] = useState(false);
@@ -70,11 +74,20 @@ export default function VisualizationPage({ budget }) {
     setExchangeDenom(payload?.denomCents || null);
   }
 
+  function selectPayload(payload) {
+    if (!isCoarsePointer) return;
+    setSelectedPayload(payload);
+    setDraggingMoney(payload);
+    lastDragRef.current = payload;
+    setExchangeDenom(payload?.denomCents || null);
+  }
+
   function clearDragging() {
     setDraggingMoney(null);
     lastDragRef.current = null;
     setExchangeDenom(null);
     setExchangeOpen(false);
+    setSelectedPayload(null);
   }
 
   function readPayload(e) {
@@ -100,6 +113,18 @@ export default function VisualizationPage({ budget }) {
     const p = readPayload(e) || lastDragRef.current;
     if (!p?.denomCents) return clearDragging();
     moveOneToCash(p);
+    clearDragging();
+  }
+
+  function onTapBucket(bucketId) {
+    if (!isCoarsePointer || !selectedPayload) return;
+    moveOneToBucket(selectedPayload, bucketId);
+    clearDragging();
+  }
+
+  function onTapCash() {
+    if (!isCoarsePointer || !selectedPayload) return;
+    moveOneToCash(selectedPayload);
     clearDragging();
   }
 
@@ -212,6 +237,23 @@ export default function VisualizationPage({ budget }) {
         </div>
       </Card>
 
+      {isCoarsePointer && selectedPayload && (
+        <section className="mobileDragBar">
+          <div className="mobileDragBar__label">Wybrano: {formatDenom(selectedPayload.denomCents)}</div>
+          <div className="mobileDragBar__actions">
+            <button type="button" className="mobileDragBar__btn" onClick={onDropExchange}>
+              Rozmien
+            </button>
+            <button type="button" className="mobileDragBar__btn" onClick={addToMergeBasket}>
+              Scalaj
+            </button>
+            <button type="button" className="mobileDragBar__btn" onClick={clearDragging}>
+              Anuluj
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="envelopes">
         {state.buckets.map((b) => (
           <Envelope
@@ -222,6 +264,9 @@ export default function VisualizationPage({ budget }) {
             onDragOver={allowDrop}
             onDragStart={setPayload}
             onDragEnd={clearDragging}
+            onSelect={selectPayload}
+            selectedPayload={selectedPayload}
+            onTapTarget={onTapBucket}
           />
         ))}
       </section>
@@ -234,6 +279,9 @@ export default function VisualizationPage({ budget }) {
           onDragOver={allowDrop}
           onDragStart={setPayload}
           onDragEnd={clearDragging}
+          onSelect={selectPayload}
+          selectedPayload={selectedPayload}
+          onTapTarget={onTapCash}
         />
       </Card>
 
