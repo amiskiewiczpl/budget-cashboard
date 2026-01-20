@@ -1,35 +1,41 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import "./App.css";
+import { HashRouter, Routes, Route, NavLink } from "react-router-dom";
+import DashboardPage from "./pages/DashboardPage";
+import VisualizationPage from "./pages/VisualizationPage";
+import useBudgetState from "./utils/useBudgetState";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const budget = useBudgetState();
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <HashRouter>
+      <div className="app">
+        <header className="topbar">
+          <div className="topbar__inner">
+            <div className="brand">
+              <div className="brand__dot" />
+              <div>
+                <h1 className="brand__title">Budget Cashboard</h1>
+                <p className="brand__subtitle">Koperty + przeciąganie „prawdziwych” pieniędzy</p>
+              </div>
+            </div>
 
-export default App
+            <nav className="nav">
+              <NavLink className={({ isActive }) => `navLink ${isActive ? "navLink--active" : ""}`} to="/">
+                Dashboard
+              </NavLink>
+              <NavLink className={({ isActive }) => `navLink ${isActive ? "navLink--active" : ""}`} to="/wizualizacja">
+                Wizualizacja
+              </NavLink>
+            </nav>
+          </div>
+        </header>
+
+        <Routes>
+          <Route path="/" element={<DashboardPage budget={budget} />} />
+          <Route path="/wizualizacja" element={<VisualizationPage budget={budget} />} />
+        </Routes>
+      </div>
+    </HashRouter>
+  );
+}
